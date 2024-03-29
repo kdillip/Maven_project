@@ -1,0 +1,43 @@
+pipeline{
+    agent any
+    tools{
+        maven "LOCAL_MAVEN"
+        }
+    stages{
+        stage("checkout code"){
+            steps{
+                git 'https://github.com/kdillip/maven-web-app.git'
+            }
+        }
+        stage('build code'){
+            steps{
+             sh'mvn clean package'
+            }
+        }
+        stage('build docker image'){
+            steps{
+                script{
+                    sh'docker build -t rdillip/nginx:1.19 .'
+                }
+            }
+        }
+        stage('docker image pushdocker hub'){
+            steps{
+                script{
+                    withCredentials([string(credentialsId: 'DockerHubcredential', variable: 'Dockerhubcredential')]) {
+                    }
+                }
+            }
+        }
+        stage('push_docker_imagein dockerrhub'){
+            steps{
+                script{
+                    withCredentials([string(credentialsId: 'DockerHubcredential', variable: 'Dockerhubcredential')]) {
+                        sh 'docker login -u rdillip -p ${Dockerhubcredential}' 
+                        sh 'docker push rdillip/nginx:1.19'
+                    }
+                }
+            }
+        }
+    }
+}
